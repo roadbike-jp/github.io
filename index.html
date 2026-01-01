@@ -12,6 +12,14 @@
       height: 100vh;
       width: 100%;
     }
+
+    /* ピンを丸くする */
+    .circle-icon {
+      border-radius: 50%;
+      overflow: hidden;
+    }
+
+    /* ポップアップ内の写真 */
     img.photo {
       width: 200px;
       border-radius: 8px;
@@ -35,13 +43,20 @@
       attribution: '© OpenStreetMap contributors'
     }).addTo(map);
 
-    // ★ 写真ピン（例：大阪城付近）
-    const photoMarker = L.marker([34.6873, 135.5262]).addTo(map);
+    // ★ 小さい写真ピン（丸いサムネイル）
+    const photoIcon = L.icon({
+      iconUrl: 'photos/osaka1.jpg',  // ← アップした写真
+      iconSize: [40, 40],            // ← ピンの大きさ
+      className: 'circle-icon'
+    });
 
-    // ピンをクリックしたら写真を表示
+    // ピンを追加（大阪城付近）
+    const photoMarker = L.marker([34.6873, 135.5262], { icon: photoIcon }).addTo(map);
+
+    // ピンをクリックしたら大きい写真を表示
     photoMarker.bindPopup(`
       <h3>大阪城</h3>
-      <img src="photos/20251231_103510.jpg" class="photo">
+      <img src="photos/osaka1.jpg" class="photo">
     `);
   </script>
 
