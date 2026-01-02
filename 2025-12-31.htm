@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>{{TITLE}}7</title>
+<title>{{TITLE}}8</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <!-- Leaflet -->
@@ -60,7 +60,7 @@ h2 { border-left: 5px solid #0078ff; padding-left: 10px; }
 
 <div class="section">
   <h2>標高グラフ</h2>
-  <canvas id="elevationChart" height="50"></canvas>
+  <canvas id="elevationChart" height="120"></canvas>
 </div>
 
 <div class="section">
@@ -153,13 +153,31 @@ var gpx = new L.GPX("2025-12-31.gpx", {
   document.getElementById("elecount").innerText = elecount;
   document.getElementById("speedcount").innerText = speedcount;
 
-  // ★ 標高グラフを描画 ★
+  // ★ GPX の trkpt 配列を取得（2.1.2 で唯一の方法）
+  var pts = e.target._info.gpx.trk[0].trkseg[0].trkpt;
+
+  // ★ 地図上に移動マーカーを作成
+  var hoverMarker = L.circleMarker([0,0], {
+    radius: 6,
+    color: "red",
+    fillColor: "yellow",
+    fillOpacity: 1
+  }).addTo(map);
+
+  // ★ マーカー移動関数
+  function moveMarkerToPoint(i) {
+    if (i < 0 || i >= pts.length) return;
+    var p = pts[i];
+    hoverMarker.setLatLng([p.lat, p.lon]);
+  }
+
+  // ★ 標高グラフを描画（マウス連動）
   var ctx = document.getElementById("elevationChart").getContext("2d");
 
   new Chart(ctx, {
     type: "line",
     data: {
-      labels: eleData.map((v, i) => i), // X軸：ポイント番号
+      labels: eleData.map((v, i) => i),
       datasets: [{
         label: "標高 (m)",
         data: eleData,
@@ -175,6 +193,16 @@ var gpx = new L.GPX("2025-12-31.gpx", {
       scales: {
         x: { display: false },
         y: { beginAtZero: false }
+      },
+      interaction: {
+        mode: "index",
+        intersect: false
+      },
+      onHover: function(evt, active) {
+        if (active.length > 0) {
+          var index = active[0].index;
+          moveMarkerToPoint(index);
+        }
       }
     }
   });
