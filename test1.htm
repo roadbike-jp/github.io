@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>GPX + Elevation Link4</title>
+<title>GPX + Elevation Link5</title>
 <style>
   body { margin: 0; }
   #map { height: 50vh; }
@@ -53,6 +53,7 @@ function findPolyline(layer) {
 // ------------------------------------------------------
 const gpx = new L.GPX("2025-12-31.gpx", {
   async: true,
+    polyline_options: { color: "red", weight: 4, opacity: 0.8 }
   marker_options: { startIconUrl: null, endIconUrl: null }
 }).on("loaded", function(e) {
 
