@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>{{TITLE}}10</title>
+<title>{{TITLE}}11</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <!-- Leaflet -->
@@ -106,9 +106,8 @@ var gpx = new L.GPX("2025-12-31.gpx", {
   polyline_options: { color: "red", weight: 4, opacity: 0.8 }
 })
 
-// ★ loaded：距離・標高などの統計値はここでOK
+// ★ loaded：統計値だけ読む（安全）
 .on("loaded", function(e) {
-  map.fitBounds(e.target.getBounds());
 
   var dist = (e.target.get_distance() / 1000).toFixed(2);
   var gain = Math.round(e.target.get_elevation_gain());
@@ -122,10 +121,7 @@ var gpx = new L.GPX("2025-12-31.gpx", {
   var moving = e.target.get_moving_time();
 
   var speeds = e.target.get_speed_data();
-  var avg = 0;
-  if (speeds.length > 0) {
-    avg = (speeds.reduce((a,b)=>a+b,0) / speeds.length) * 3.6;
-  }
+  var avg = speeds.length ? (speeds.reduce((a,b)=>a+b,0)/speeds.length)*3.6 : 0;
 
   var eleData = e.target.get_elevation_data();
 
@@ -149,64 +145,72 @@ var gpx = new L.GPX("2025-12-31.gpx", {
   document.getElementById("speedcount").innerText = speeds.length;
 })
 
-// ★ addline：trkpt はここでしか安全に取得できない
+// ★ addline：trkpt はここで読む（最も安定）
 .on("addline", function(e) {
 
-  // trkpt を取得（trk=1, trkseg=1 前提）
-  var pts = e.target._info.gpx.trk[0].trkseg[0].trkpt;
+  try {
+    // trkpt を取得（trk=1, trkseg=1）
+    var pts = e.target._info.gpx.trk[0].trkseg[0].trkpt;
 
-  // 地図上のマーカー
-  var hoverMarker = L.circleMarker([0,0], {
-    radius: 6,
-    color: "red",
-    fillColor: "yellow",
-    fillOpacity: 1
-  }).addTo(map);
+    // マーカー
+    var hoverMarker = L.circleMarker([0,0], {
+      radius: 6,
+      color: "red",
+      fillColor: "yellow",
+      fillOpacity: 1
+    }).addTo(map);
 
-  function moveMarkerToPoint(i) {
-    if (i < 0 || i >= pts.length) return;
-    hoverMarker.setLatLng([pts[i].lat, pts[i].lon]);
-  }
+    function moveMarkerToPoint(i) {
+      if (i < 0 || i >= pts.length) return;
+      hoverMarker.setLatLng([pts[i].lat, pts[i].lon]);
+    }
 
-  // 標高データ
-  var eleData = e.target.get_elevation_data();
+    // 標高データ
+    var eleData = e.target.get_elevation_data();
 
-  // Chart.js 描画（タイミング問題を回避）
-  setTimeout(() => {
-    var ctx = document.getElementById("elevationChart").getContext("2d");
+    // グラフ描画（タイミング問題を回避）
+    setTimeout(() => {
+      var ctx = document.getElementById("elevationChart").getContext("2d");
 
-    new Chart(ctx, {
-      type: "line",
-      data: {
-        labels: eleData.map((v, i) => i),
-        datasets: [{
-          label: "標高 (m)",
-          data: eleData,
-          borderColor: "#0078ff",
-          backgroundColor: "rgba(0,120,255,0.2)",
-          borderWidth: 2,
-          pointRadius: 0,
-          tension: 0.2
-        }]
-      },
-      options: {
-        responsive: true,
-        scales: {
-          x: { display: false },
-          y: { beginAtZero: false }
+      new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: eleData.map((v, i) => i),
+          datasets: [{
+            label: "標高 (m)",
+            data: eleData,
+            borderColor: "#0078ff",
+            backgroundColor: "rgba(0,120,255,0.2)",
+            borderWidth: 2,
+            pointRadius: 0,
+            tension: 0.2
+          }]
         },
-        interaction: {
-          mode: "index",
-          intersect: false
-        },
-        onHover: function(evt, active) {
-          if (active.length > 0) {
-            moveMarkerToPoint(active[0].index);
+        options: {
+          responsive: true,
+          scales: {
+            x: { display: false },
+            y: { beginAtZero: false }
+          },
+          interaction: {
+            mode: "index",
+            intersect: false
+          },
+          onHover: function(evt, active) {
+            if (active.length > 0) {
+              moveMarkerToPoint(active[0].index);
+            }
           }
         }
-      }
-    });
-  }, 50);
+      });
+    }, 50);
+
+    // ★ fitBounds は addline の後が最も安定
+    map.fitBounds(e.target.getBounds());
+
+  } catch (err) {
+    console.error("addline error:", err);
+  }
 
 })
 
