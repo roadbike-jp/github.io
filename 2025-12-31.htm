@@ -2,14 +2,14 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>{{TITLE}}14</title>
+<title>{{TITLE}}1</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <!-- Leaflet -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/2.1.2/gpx.min.js"></script>
-  
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/2.1.2/gpx.min.js"></script>
+
 <style>
 body {
   font-family: sans-serif;
@@ -51,7 +51,8 @@ h2 {
 
 <header>
   <h1>{{TITLE}}</h1>
-  <p>{{DATE}} / 距離：{{DISTANCE}}km / 獲得標高：{{ELEVATION}}m</p>
+  <p>{{DATE}} / 距離：<span id="dist">{{DISTANCE}}</span>km / 
+     獲得標高：<span id="elev">{{ELEVATION}}</span>m</p>
 </header>
 
 <div id="map"></div>
@@ -85,38 +86,37 @@ h2 {
 </div>
 
 <script>
-// ① map を1回だけ作る
+// ① map を作成
 var map = L.map("map").setView([34.6, 135.5], 12);
 
-// ② タイルレイヤー（地図画像）を追加 ← これが抜けていた！
+// ② タイルレイヤー
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   maxZoom: 19,
   attribution: "© OpenStreetMap contributors"
 }).addTo(map);
 
-// ③ GPX を map に追加する
-new L.GPX("2025-12-31.gpx", {
+// ③ GPX 読み込み
+var gpx = new L.GPX("2025-12-31.gpx", {
   async: true,
   polyline_options: {
     color: "red",
     weight: 4,
     opacity: 0.8
   }
-}).on("loaded", function(e) {
+})
+.on("loaded", function(e) {
   map.fitBounds(e.target.getBounds());
-    
-  // --- ここで距離・標高などの情報を取得 ---
+
+  // 距離・標高を取得
   var distance = (e.target.get_distance() / 1000).toFixed(1); // km
   var elevation = Math.round(e.target.get_elevation_gain());  // m
 
-  // --- HTML に反映 ---
-  document.body.innerHTML = document.body.innerHTML
-    .replace("{{DISTANCE}}", distance)
-    .replace("{{ELEVATION}}", elevation);
+  // HTML に反映（body を書き換えない）
+  document.getElementById("dist").innerText = distance;
+  document.getElementById("elev").innerText = elevation;
 })
-    .addTo(map);
+.addTo(map);
 </script>
-
 
 </body>
 </html>
